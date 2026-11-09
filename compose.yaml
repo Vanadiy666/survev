@@ -19,6 +19,7 @@ x-server: &server
 services:
   configure:
     <<: *server
+    container_name: survev-configure
     user: "0:0"
     command: ["sh", "/app/docker/configure.sh"]
     volumes:
@@ -27,6 +28,7 @@ services:
     environment: *config-environment
 
   db:
+    container_name: survev-db
     image: postgres:17-bookworm
     restart: unless-stopped
     environment:
@@ -42,6 +44,7 @@ services:
       retries: 20
 
   redis:
+    container_name: survev-redis
     image: redis:7-bookworm
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
@@ -55,6 +58,7 @@ services:
 
   migrate:
     <<: *server
+    container_name: survev-migrate
     command: ["pnpm", "db:migrate"]
     environment:
       <<: *config-environment
@@ -69,6 +73,7 @@ services:
 
   api:
     <<: *server
+    container_name: survev-api
     restart: unless-stopped
     command: ["node", "--enable-source-maps", "dist/index.js"]
     environment:
@@ -88,6 +93,7 @@ services:
 
   game:
     <<: *server
+    container_name: survev-game
     restart: unless-stopped
     command: ["node", "--enable-source-maps", "dist/gameServer.js"]
     environment:
@@ -109,6 +115,7 @@ services:
       retries: 10
 
   web:
+    container_name: survev-web
     build:
       context: .
       dockerfile: docker/Dockerfile

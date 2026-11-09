@@ -89,6 +89,12 @@ a restart of the affected server. Recreating the game server interrupts matches.
 
 ## Services and startup
 
+Containers have explicit names: `survev-configure`, `survev-migrate`,
+`survev-api`, `survev-game`, `survev-web`, `survev-db`, and `survev-redis`.
+Internal connections still use the service names (`api`, `game`, `db`, `redis`).
+These fixed container names allow one instance of this stack per Docker host;
+using a different Compose project name alone does not avoid name conflicts.
+
 - `configure` prepares ownership of the configuration and lost-match directories,
   then switches to the `node` user to create shared server secrets and separate
   API/game configuration files in `./data/config`. API uses `game:8001` internally; the game server
