@@ -1,9 +1,10 @@
 # Include generated-config inputs in each consumer's container configuration.
 # Compose then recreates consumers when these values change.
 x-config-environment: &config-environment
-  PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
-  WEB_PORT: ${WEB_PORT:-8080}
-  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-survev}
+  PUBLIC_HOST: ${PUBLIC_HOST}
+  WEB_PORT: ${WEB_PORT}
+  GAME_PORT: ${GAME_PORT}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
 x-server: &server
   image: survev-server:local
@@ -31,7 +32,7 @@ services:
     environment:
       POSTGRES_USER: survev
       POSTGRES_DB: survev
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-survev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -96,7 +97,7 @@ services:
       - ./data/config:/config
       - ./data/lost-games:/app/server/lost_game_data
     ports:
-      - "8001:8001"
+      - "${GAME_PORT}:8001"
       - "9000-9063:9000-9063"
     depends_on:
       api:
@@ -113,11 +114,12 @@ services:
       dockerfile: docker/Dockerfile
       target: web
       args:
-        PUBLIC_HOST: ${PUBLIC_HOST:-localhost}
-        WEB_PORT: ${WEB_PORT:-8080}
+        PUBLIC_HOST: ${PUBLIC_HOST}
+        WEB_PORT: ${WEB_PORT}
+        GAME_PORT: ${GAME_PORT}
     restart: unless-stopped
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_PORT}:80"
     depends_on:
       api:
         condition: service_healthy

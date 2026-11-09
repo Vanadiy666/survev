@@ -5,10 +5,16 @@ import hjson from "hjson";
 
 const host = process.env.PUBLIC_HOST || "localhost";
 const port = Number(process.env.WEB_PORT || 8080);
-if (!/^[a-zA-Z0-9.-]+$/.test(host) || !Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error("PUBLIC_HOST must be a hostname or IPv4 address; WEB_PORT must be a valid port");
+const gamePort = Number(process.env.GAME_PORT || 8001);
+if (!/^[a-zA-Z0-9.-]+$/.test(host)) {
+    throw new Error("PUBLIC_HOST must be a hostname or IPv4 address");
 }
-const region = { https: false, address: `${host}:8001`, l10n: "index-local" };
+for (const [name, value] of [["WEB_PORT", port], ["GAME_PORT", gamePort]]) {
+    if (!Number.isInteger(value) || value < 1 || value > 65535) {
+        throw new Error(`${name} must be a valid port (1–65535)`);
+    }
+}
+const region = { https: false, address: `${host}:${gamePort}`, l10n: "index-local" };
 const publicConfig = {
     oauthRedirectURI: `http://${host}:${port}`,
     regions: { local: region },

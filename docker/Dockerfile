@@ -31,6 +31,7 @@ ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
 FROM dependencies AS client-build
 ARG PUBLIC_HOST=localhost
 ARG WEB_PORT=8080
+ARG GAME_PORT=8001
 # Optional affinity limit for atlas workers on small build machines.
 ARG CLIENT_BUILD_CPUSET=""
 RUN node docker/config.mjs build \

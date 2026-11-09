@@ -1,12 +1,23 @@
 # Docker Compose
 
-Run from the repository root with Docker Engine and the Docker Compose plugin:
+Run from the repository root with Docker Engine and the Docker Compose plugin.
+First create `.env` (if it does not already exist) and set all four required
+variables: `PUBLIC_HOST`, `WEB_PORT`, `GAME_PORT`, and `POSTGRES_PASSWORD`.
+Compose substitutes these values directly; it does not supply defaults.
+
+```sh
+cp docker/.env.example .env
+# Edit .env before starting: set the host, ports and database password.
+```
+
+Then start:
 
 ```sh
 docker compose up -d --build
 ```
 
-Open **http://localhost:8080**. Node.js, pnpm, PostgreSQL and Redis do not need
+Open **http://PUBLIC_HOST:WEB_PORT** using the values from `.env`.
+Node.js, pnpm, PostgreSQL and Redis do not need
 to be installed on the host. The first build downloads dependencies and builds
 the client assets and server.
 
@@ -29,7 +40,8 @@ out of memory on the largest atlas with one worker; the build succeeded with
 an additional 4 GiB of temporary swap. Allow more memory or swap for builds.
 
 Direct builds do not read `.env`; supply `--build-arg PUBLIC_HOST=your-host`
-and `--build-arg WEB_PORT=8080` to the web build when changing the defaults.
+and `--build-arg WEB_PORT=8080` / `--build-arg GAME_PORT=8001` to the web build
+when changing the defaults.
 To use `podman compose -f compose.yaml`, install a modern Compose provider
 supporting `service_completed_successfully`; Compose 1.27.4 is too old.
 
@@ -43,6 +55,7 @@ cp docker/.env.example .env
 
 Set `PUBLIC_HOST` to the server's LAN/public IPv4 address or DNS hostname
 (without a scheme, path or port). Set `WEB_PORT` if port 8080 is unavailable.
+Set `GAME_PORT` if the main game-server port 8001 is unavailable.
 Set `POSTGRES_PASSWORD` before the first start. Then run:
 
 ```sh
@@ -50,15 +63,23 @@ docker compose up -d --build
 ```
 
 Players open `http://PUBLIC_HOST:WEB_PORT`. Allow inbound **TCP** on the web
-port, **8001**, and **9000–9063**; forward these ports when hosting behind a
+port, **GAME_PORT** (8001 in the example), and **9000–9063**; forward these ports when hosting behind a
 router. Each match has its own WebSocket port, as in the original server.
-Game ports must keep their original numbers on the host.
+Match ports 9000–9063 must keep their original numbers on the host.
+
+For example, set `GAME_PORT=8002` in `.env`, then rebuild and start with the
+command above. Compose publishes `8002:8001`, and the client and game server
+advertise the public port 8002. Internal API requests and healthchecks still
+use port 8001. Set the port once in `.env` or the shell; Compose uses
+the required `GAME_PORT` value for the port mapping, server environment and client build.
+Choose a port distinct
+from `WEB_PORT` and the reserved match range 9000–9063.
 
 The public address is compiled into the browser client. After changing
-`PUBLIC_HOST` or `WEB_PORT`, run `docker compose up -d --build` again; restarting
+`PUBLIC_HOST`, `WEB_PORT` or `GAME_PORT`, run `docker compose up -d --build` again; restarting
 containers alone does not rebuild the client.
 
-The same configuration inputs (`PUBLIC_HOST`, `WEB_PORT`, `POSTGRES_PASSWORD`)
+The same configuration inputs (`PUBLIC_HOST`, `WEB_PORT`, `GAME_PORT`, `POSTGRES_PASSWORD`)
 are included in the environment of `configure`, `migrate`, `api` and `game`.
 This makes Compose recreate those containers when a value changes, so running
 servers reload the generated configuration after configuration and migrations
