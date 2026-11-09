@@ -12,7 +12,7 @@ export async function getRedisClient() {
     if (redisClient || !Config.cachingEnabled) {
         return redisClient;
     }
-    const cacheInstance = createClient();
+    const cacheInstance = createClient({ url: process.env.REDIS_URL });
 
     cacheInstance.on("connect", () => server.logger.info("Connected to redis"));
     process.on("exit", () => cleanupRedis);

@@ -79,3 +79,6 @@ systemctl enable --now redis-server
 
 ## Production
 See [HOSTING.md](./HOSTING.md)
+
+For a complete Docker Compose deployment with PostgreSQL and Redis, see
+[docker/README.md](./docker/README.md).

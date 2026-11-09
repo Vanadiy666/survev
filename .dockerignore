@@ -1,0 +1,10 @@
+.git
+data/
+**/node_modules
+**/dist
+**/.env
+.env.*
+survev-config.hjson
+**/lost_game_data
+client/atlas-builder/pngs
+.DS_Store
