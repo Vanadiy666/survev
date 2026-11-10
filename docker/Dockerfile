@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # uWebSockets.js ARM64 binaries require glibc >= 2.38.
 FROM node:22-trixie AS dependencies
 WORKDIR /app
@@ -16,6 +17,9 @@ COPY tests/package.json tests/package.json
 RUN pnpm install --frozen-lockfile
 COPY . .
 
+FROM dependencies AS development
+CMD ["pnpm", "dev"]
+
 FROM dependencies AS server-build
 RUN pnpm --filter @survev/server build
 
@@ -32,9 +36,12 @@ FROM dependencies AS client-build
 ARG PUBLIC_HOST=localhost
 ARG WEB_PORT=8080
 ARG GAME_PORT=8001
+ARG VITE_ENABLE_SURVEV_ADS=false
+ARG VITE_NITROPAY_SITE_ID=""
+ARG VITE_BUILD_FOR_SPELLSYNC=false
 # Optional affinity limit for atlas workers on small build machines.
 ARG CLIENT_BUILD_CPUSET=""
-RUN node docker/config.mjs build \
+RUN --mount=type=secret,id=survev_config node docker/config.mjs build \
     && if [ -n "$CLIENT_BUILD_CPUSET" ]; then \
         taskset -c "$CLIENT_BUILD_CPUSET" pnpm --filter @survev/client build; \
     else \
@@ -43,6 +50,8 @@ RUN node docker/config.mjs build \
 
 FROM nginx:stable-bookworm AS web
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
-ENV NGINX_ENVSUBST_FILTER=^NGINX_LOCAL_RESOLVERS$
+ENV NGINX_TLS=""
+ENV API_UPSTREAM=api:8000
+ENV NGINX_ENVSUBST_FILTER="^(NGINX_LOCAL_RESOLVERS|NGINX_TLS|API_UPSTREAM)$"
 COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=client-build /app/client/dist /usr/share/nginx/html

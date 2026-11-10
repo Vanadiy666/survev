@@ -1,0 +1,16 @@
+# Use with: docker compose -f compose.yaml -f docker/compose.tls.yaml ...
+# Relative paths are resolved against the repository root compose.yaml.
+services:
+  game:
+    volumes:
+      - ${TLS_CERT_DIR:-./data/certs}:/certs:ro
+  web:
+    environment:
+      NGINX_TLS: |
+        listen 443 ssl;
+        ssl_certificate /certs/fullchain.pem;
+        ssl_certificate_key /certs/privkey.pem;
+    ports:
+      - "${WEB_TLS_PORT:-443}:443"
+    volumes:
+      - ${TLS_CERT_DIR:-./data/certs}:/certs:ro

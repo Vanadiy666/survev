@@ -3,7 +3,7 @@ resolver ${NGINX_LOCAL_RESOLVERS} valid=5s;
 
 upstream survev_api {
     zone survev_api 64k;
-    server api:8000 resolve;
+    server ${API_UPSTREAM} resolve;
 }
 
 map $http_upgrade $connection_upgrade {
@@ -13,6 +13,7 @@ map $http_upgrade $connection_upgrade {
 
 server {
     listen 80;
+    ${NGINX_TLS}
     server_name _;
     root /usr/share/nginx/html;
     index index.html;

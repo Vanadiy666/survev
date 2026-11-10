@@ -1,0 +1,46 @@
+# Run only dev (and its enabled dependencies), not production api/game/web.
+services:
+  dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: development
+    init: true
+    working_dir: /app
+    command: ["sh", "-c", "pnpm install --frozen-lockfile && exec pnpm dev"]
+    environment:
+      NODE_ENV: development
+      # VM bind mounts may not forward filesystem events.
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-true}
+      CHOKIDAR_INTERVAL: "500"
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+    volumes:
+      - .:/app
+      - ${SURVEV_CONFIG:-./survev-config.hjson}:/app/survev-config.hjson
+      # Keep Linux dependencies inside Docker, never in the host's node_modules.
+      - dev-root-modules:/app/node_modules
+      - dev-server-modules:/app/server/node_modules
+      - dev-client-modules:/app/client/node_modules
+      - dev-shared-modules:/app/shared/node_modules
+      - dev-bot-modules:/app/bot/node_modules
+      - dev-tests-modules:/app/tests/node_modules
+    ports:
+      - "${DEV_PORT:-3000}:${DEV_INTERNAL_PORT:-3000}"
+      - "${GAME_PORT}:${GAME_INTERNAL_PORT:-8001}"
+      - "${MATCH_PORT_START:-9000}-${MATCH_PORT_END:-9063}:${MATCH_PORT_START:-9000}-${MATCH_PORT_END:-9063}"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+        required: false
+      redis:
+        condition: service_healthy
+        required: false
+
+volumes:
+  dev-root-modules:
+  dev-server-modules:
+  dev-client-modules:
+  dev-shared-modules:
+  dev-bot-modules:
+  dev-tests-modules:
